@@ -1,70 +1,202 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Physics Helper</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        .resistor-theme {
-            background-color: #f0f0f0;
-            background-image: url('resistor-pattern.png');
-        }
-        .capacitor-theme {
-            background-color: #e0f7fa;
-            background-image: url('capacitor-pattern.png');
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Physics Circuit Solver</title>
+
+<style>
+body{
+font-family:Arial;
+text-align:center;
+background:linear-gradient(135deg,#ff9a00,#ff3d00);
+color:white;
+}
+
+h1{
+margin-top:20px;
+}
+
+#toolbar{
+margin:20px;
+}
+
+button{
+padding:10px 15px;
+margin:5px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+}
+
+canvas{
+background:white;
+border:3px solid black;
+}
+
+input{
+padding:8px;
+margin:5px;
+}
+
+#result{
+font-size:20px;
+margin-top:20px;
+}
+</style>
 </head>
+
 <body>
-    <header>
-        <h1>Physics Helper</h1>
-        <label for="systemType">Select System Type:</label>
-        <select id="systemType" onchange="changeTheme()">
-            <option value="resistors">Resistors</option>
-            <option value="capacitors">Capacitors</option>
-        </select>
-    </header>
-    <main>
-        <div id="drawingArea">
-            <!-- Drawing area for resistors or capacitors -->
-        </div>
-        <div id="inputResistors" style="display:none;">
-            <h2>Resistor System</h2>
-            <input type="text" id="resistorValues" placeholder="Enter resistances (r1,r2,r3)">
-            <button onclick="calculateResistance()">Calculate Equivalent Resistance</button>
-        </div>
-        <div id="inputCapacitors" style="display:none;">
-            <h2>Capacitor System</h2>
-            <input type="text" id="capacitorValues" placeholder="Enter capacities (c1,c2,c3)">
-            <button onclick="calculateCapacitance()">Calculate Equivalent Capacitance</button>
-        </div>
-    </main>
-    <script>
-        function changeTheme() {
-            const systemType = document.getElementById('systemType').value;
-            document.body.className = systemType === 'resistors' ? 'resistor-theme' : 'capacitor-theme';
-            document.getElementById('inputResistors').style.display = systemType === 'resistors' ? 'block' : 'none';
-            document.getElementById('inputCapacitors').style.display = systemType === 'capacitors' ? 'block' : 'none';
-        }
 
-        function calculateResistance() {
-            const values = document.getElementById('resistorValues').value.split(',').map(Number);
-            const seriesResistance = values.reduce((a, b) => a + b, 0);
-            const parallelResistance = 1 / values.reduce((a, b) => a + (1 / b), 0);
-            alert(`Series Resistance: ${seriesResistance} Ω\nParallel Resistance: ${parallelResistance} Ω`);
-        }
+<h1>⚡ Physics Circuit Solver</h1>
 
-        function calculateCapacitance() {
-            const values = document.getElementById('capacitorValues').value.split(',').map(Number);
-            const seriesCapacitance = 1 / values.reduce((a, b) => a + (1 / b), 0);
-            const parallelCapacitance = values.reduce((a, b) => a + b, 0);
-            alert(`Series Capacitance: ${seriesCapacitance} F\nParallel Capacitance: ${parallelCapacitance} F`);
-        }
-    </script>
+<div id="toolbar">
+
+<select id="systemType">
+<option value="resistor">Resistors</option>
+<option value="capacitor">Capacitors</option>
+</select>
+
+<select id="connectionType">
+<option value="series">Series</option>
+<option value="parallel">Parallel</option>
+</select>
+
+<button onclick="addComponent()">Add Component</button>
+<button onclick="calculate()">Calculate Equivalent</button>
+
+</div>
+
+<canvas id="circuitCanvas" width="800" height="400"></canvas>
+
+<div id="values"></div>
+
+<div id="result"></div>
+
+<script>
+
+let components=[]
+let canvas=document.getElementById("circuitCanvas")
+let ctx=canvas.getContext("2d")
+
+function addComponent(){
+
+let value=prompt("Enter resistance (Ohms)")
+
+if(value==null)return
+
+components.push(Number(value))
+
+drawCircuit()
+
+displayInputs()
+
+}
+
+function drawCircuit(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height)
+
+let x=50
+let y=200
+
+for(let i=0;i<components.length;i++){
+
+drawResistor(x,y)
+
+ctx.fillStyle="black"
+ctx.fillText(components[i]+"Ω",x+10,y-20)
+
+x+=120
+
+}
+
+}
+
+function drawResistor(x,y){
+
+ctx.beginPath()
+
+ctx.moveTo(x,y)
+
+ctx.lineTo(x+10,y)
+
+ctx.lineTo(x+20,y-10)
+
+ctx.lineTo(x+30,y+10)
+
+ctx.lineTo(x+40,y-10)
+
+ctx.lineTo(x+50,y+10)
+
+ctx.lineTo(x+60,y)
+
+ctx.lineTo(x+70,y)
+
+ctx.stroke()
+
+}
+
+function displayInputs(){
+
+let html=""
+
+for(let i=0;i<components.length;i++){
+
+html+=`
+<input type="number" value="${components[i]}" 
+onchange="components[${i}]=Number(this.value)">
+`
+
+}
+
+document.getElementById("values").innerHTML=html
+
+}
+
+function calculate(){
+
+let type=document.getElementById("connectionType").value
+let system=document.getElementById("systemType").value
+
+if(system==="resistor"){
+
+if(type==="series"){
+
+let R=0
+
+components.forEach(v=>R+=v)
+
+document.getElementById("result").innerText=
+"Equivalent Resistance = "+R+" Ω"
+
+}
+
+else{
+
+let sum=0
+
+components.forEach(v=>sum+=1/v)
+
+let R=1/sum
+
+document.getElementById("result").innerText=
+"Equivalent Resistance = "+R.toFixed(3)+" Ω"
+
+}
+
+}
+
+else{
+
+document.getElementById("result").innerText=
+"Capacitor system coming next..."
+
+}
+
+}
+
+</script>
+
 </body>
 </html>

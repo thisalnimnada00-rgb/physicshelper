@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Circuit Solver: Resistors & Capacitors</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
         /* Base Styling */
         body {
@@ -134,10 +135,16 @@
                 <button id="btn-cap-3d" onclick="setCapacitorDimension('3D')">3D Canvas</button>
             </div>
 
-            <div class="workspace" id="cap-canvas-area">
-                [2D Drawing Engine Placeholder] - This will eventually hold the canvas where users draw capacitors using international symbols.
-            </div>
+          <div class="toolbox" style="margin-bottom: 10px; text-align: center;">
+    <button onclick="addComponent()">+ Add Component</button>
+    <button onclick="addWire()">+ Add Wire</button>
+    <button onclick="deleteSelected()" style="border-color: #e74c3c; color: #e74c3c;">Delete Selected</button>
+    <button onclick="clearCanvas()">Clear All</button>
+</div>
 
+<div style="display: flex; justify-content: center;">
+    <canvas id="circuit-canvas" width="800" height="400" style="border:1px solid #2c3e50; background: #fff;"></canvas>
+</div>
             <div class="math-section">
                 <h3>Calculation Engine (Test Console)</h3>
                 <p>Enter capacitance values separated by commas (e.g., 5, 10, 15)</p>
@@ -252,6 +259,74 @@
             // Displaying Farads (F) as the unit
             document.getElementById('calc-cap-result').innerText = `Result (${type}): ${ceq.toFixed(2)} F`;
         }
+        // Initialize Fabric Canvas
+const canvas = new fabric.Canvas('circuit-canvas');
+
+// Function to create the International Symbol for Resistor (Zig-Zag)
+function createResistorSymbol(x, y) {
+    const points = [
+        {x: 0, y: 10}, {x: 10, y: 10},  // Lead-in
+        {x: 15, y: 0}, {x: 25, y: 20},  // Zig
+        {x: 35, y: 0}, {x: 45, y: 20},  // Zag
+        {x: 55, y: 10}, {x: 65, y: 10}  // Lead-out
+    ];
+    return new fabric.Polyline(points, {
+        fill: 'transparent',
+        stroke: 'black',
+        strokeWidth: 2,
+        left: x,
+        top: y
+    });
+}
+
+// Function to create the International Symbol for Capacitor (Parallel Plates)
+function createCapacitorSymbol(x, y) {
+    const line1 = new fabric.Line([0, 0, 0, 20], { stroke: 'black', strokeWidth: 3 });
+    const line2 = new fabric.Line([10, 0, 10, 20], { stroke: 'black', strokeWidth: 3 });
+    const lead1 = new fabric.Line([-15, 10, 0, 10], { stroke: 'black', strokeWidth: 2 });
+    const lead2 = new fabric.Line([10, 10, 25, 10], { stroke: 'black', strokeWidth: 2 });
+    
+    return new fabric.Group([line1, line2, lead1, lead2], {
+        left: x,
+        top: y
+    });
+}
+
+// Add the selected component to the canvas
+function addComponent() {
+    let component;
+    if (currentComponent === 'resistor') {
+        component = createResistorSymbol(100, 100);
+    } else {
+        component = createCapacitorSymbol(100, 100);
+    }
+    canvas.add(component);
+}
+
+// Simple wire (line) drawing
+function addWire() {
+    const line = new fabric.Line([50, 50, 150, 50], {
+        fill: 'black',
+        stroke: 'black',
+        strokeWidth: 2,
+        selectable: true
+    });
+    canvas.add(line);
+}
+
+// Delete selected object
+function deleteSelected() {
+    const activeObjects = canvas.getActiveObjects();
+    canvas.discardActiveObject();
+    canvas.remove(...activeObjects);
+}
+
+// Clear the board
+function clearCanvas() {
+    if(confirm("Clear the entire system?")) {
+        canvas.clear();
+    }
+}
         // Initialize Fabric Canvas
 const canvas = new fabric.Canvas('circuit-canvas');
 

@@ -29,7 +29,16 @@ cursor:pointer;
 font-weight:bold;
 }
 
-canvas{
+<select id="systemSelector" onchange="changeSystem()">
+<option value="resistor">Resistor System</option>
+<option value="capacitor">Capacitor System</option>
+</select>
+
+<select id="dimensionSelector">
+<option value="2d">2D System</option>
+<option value="3d">3D System</option>
+</select>
+  canvas{
 background:white;
 border:3px solid black;
 }
@@ -74,23 +83,52 @@ margin-top:20px;
 <div id="result"></div>
 
 <script>
+  let systemType="resistor"
+
+function changeSystem(){
+
+systemType=document.getElementById("systemSelector").value
+
+if(systemType==="resistor"){
+document.body.style.background="linear-gradient(135deg,#ff9a00,#ff3d00)"
+}
+
+if(systemType==="capacitor"){
+document.body.style.background="linear-gradient(135deg,#00bfff,#0040ff)"
+}
+
+drawCircuit()
+
+}
 
 let components=[]
 let canvas=document.getElementById("circuitCanvas")
 let ctx=canvas.getContext("2d")
 
-function addComponent(){
+function drawComponent(x,y){
 
-let value=prompt("Enter resistance (Ohms)")
+if(systemType==="resistor"){
+drawResistor(x,y)
+}
+else{
+drawCapacitor(x,y)
+}
 
-if(value==null)return
+}
 
-components.push(Number(value))
+function drawCapacitor(x,y){
 
-drawCircuit()
+ctx.beginPath()
 
-displayInputs()
+ctx.moveTo(x,y-20)
+ctx.lineTo(x,y+20)
 
+ctx.moveTo(x+20,y-20)
+ctx.lineTo(x+20,y+20)
+
+ctx.stroke()
+
+}
 }
 
 function drawCircuit(){
@@ -113,7 +151,7 @@ x+=120
 
 }
 
-function drawResistor(x,y){
+function drawComponent(x,y){
 
 ctx.beginPath()
 
@@ -157,14 +195,17 @@ document.getElementById("values").innerHTML=html
 function calculate(){
 
 let type=document.getElementById("connectionType").value
-let system=document.getElementById("systemType").value
 
-if(system==="resistor"){
+if(components.length===0){
+alert("Add components first")
+return
+}
+
+if(systemType==="resistor"){
 
 if(type==="series"){
 
 let R=0
-
 components.forEach(v=>R+=v)
 
 document.getElementById("result").innerText=
@@ -175,7 +216,6 @@ document.getElementById("result").innerText=
 else{
 
 let sum=0
-
 components.forEach(v=>sum+=1/v)
 
 let R=1/sum
@@ -187,10 +227,29 @@ document.getElementById("result").innerText=
 
 }
 
-else{
+else if(systemType==="capacitor"){
+
+if(type==="parallel"){
+
+let C=0
+components.forEach(v=>C+=v)
 
 document.getElementById("result").innerText=
-"Capacitor system coming next..."
+"Equivalent Capacitance = "+C+" F"
+
+}
+
+else{
+
+let sum=0
+components.forEach(v=>sum+=1/v)
+
+let C=1/sum
+
+document.getElementById("result").innerText=
+"Equivalent Capacitance = "+C.toFixed(6)+" F"
+
+}
 
 }
 

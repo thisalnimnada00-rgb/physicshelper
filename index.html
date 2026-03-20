@@ -3,398 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Circuit Solver: Resistors & Capacitors</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <title>Physics Helper</title>
     <style>
-        /* Base Styling */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            transition: background 0.5s ease;
-            background-color: #f4f4f9;
-            color: #333;
         }
-
-        /* Resistor Inspired Theme (Zig-zag/Circuit pattern) */
-        body.resistor-theme {
-            background-color: #fdf5e6;
-            background-image: linear-gradient(90deg, transparent 50%, rgba(255, 165, 0, 0.1) 50%);
-            background-size: 50px 50px;
+        .resistor-theme {
+            background-color: #f0f0f0;
+            background-image: url('resistor-pattern.png');
         }
-
-        /* Capacitor Inspired Theme (Parallel plates pattern) */
-        body.capacitor-theme {
-            background-color: #e6f2fd;
-            background-image: repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(0, 100, 255, 0.1) 20px, rgba(0, 100, 255, 0.1) 22px);
-        }
-
-        header {
-            background-color: #2c3e50;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .controls-container {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .toggle-group {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border: 2px solid #2c3e50;
-            background: white;
-            color: #2c3e50;
-            border-radius: 5px;
-            transition: all 0.3s;
-        }
-
-        button.active {
-            background: #2c3e50;
-            color: white;
-        }
-
-        .workspace {
-            border: 2px dashed #ccc;
-            height: 400px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #fafafa;
-            margin-bottom: 20px;
-            color: #888;
-        }
-
-        .math-section {
-            padding: 15px;
-            background: #eee;
-            border-radius: 5px;
+        .capacitor-theme {
+            background-color: #e0f7fa;
+            background-image: url('capacitor-pattern.png');
         }
     </style>
 </head>
-<body class="resistor-theme">
-
+<body>
     <header>
-        <h1>Physics Circuit Solver</h1>
-        <div class="toggle-group">
-            <button id="btn-resistor" class="active" onclick="setComponentType('resistor')">Resistor System</button>
-            <button id="btn-capacitor" onclick="setComponentType('capacitor')">Capacitor System</button>
-        </div>
+        <h1>Physics Helper</h1>
+        <label for="systemType">Select System Type:</label>
+        <select id="systemType" onchange="changeTheme()">
+            <option value="resistors">Resistors</option>
+            <option value="capacitors">Capacitors</option>
+        </select>
     </header>
-
-    <div class="controls-container">
-        
-        <div id="resistor-controls">
-            <h2 style="text-align: center;">Resistor Workspace</h2>
-            <div class="toggle-group">
-                <button id="btn-2d" class="active" onclick="setDimension('2D')">2D Canvas</button>
-                <button id="btn-3d" onclick="setDimension('3D')">3D Canvas</button>
-            </div>
-
-         <div class="toolbox" style="margin-bottom: 10px; text-align: center;">
-    <button onclick="addComponent()">+ Add Component</button>
-    <button onclick="addWire()">+ Add Wire</button>
-    <button onclick="deleteSelected()" style="border-color: #e74c3c; color: #e74c3c;">Delete Selected</button>
-    <button onclick="clearCanvas()">Clear All</button>
-</div>
-
-<div style="display: flex; justify-content: center;">
-    <canvas id="circuit-canvas" width="800" height="400" style="border:1px solid #2c3e50; background: #fff;"></canvas>
-</div>
-
-            <div class="math-section">
-                <h3>Calculation Engine (Test Console)</h3>
-                <p>Enter resistance values separated by commas (e.g., 10, 20, 30)</p>
-                <input type="text" id="r-values" placeholder="10, 20, 30" style="width: 100%; padding: 8px; margin-bottom: 10px;">
-                <button onclick="testCalculate('series')">Calculate Series</button>
-                <button onclick="testCalculate('parallel')">Calculate Parallel</button>
-                <h4 id="calc-result">Result: 0 Ω</h4>
-            </div>
+    <main>
+        <div id="drawingArea">
+            <!-- Drawing area for resistors or capacitors -->
         </div>
-
-       <div id="capacitor-controls" style="display: none;">
-            <h2 style="text-align: center;">Capacitor Workspace</h2>
-            <div class="toggle-group">
-                <button id="btn-cap-2d" class="active" onclick="setCapacitorDimension('2D')">2D Canvas</button>
-                <button id="btn-cap-3d" onclick="setCapacitorDimension('3D')">3D Canvas</button>
-            </div>
-
-          <div class="toolbox" style="margin-bottom: 10px; text-align: center;">
-    <button onclick="addComponent()">+ Add Component</button>
-    <button onclick="addWire()">+ Add Wire</button>
-    <button onclick="deleteSelected()" style="border-color: #e74c3c; color: #e74c3c;">Delete Selected</button>
-    <button onclick="clearCanvas()">Clear All</button>
-</div>
-
-<div style="display: flex; justify-content: center;">
-    <canvas id="circuit-canvas" width="800" height="400" style="border:1px solid #2c3e50; background: #fff;"></canvas>
-</div>
-            <div class="math-section">
-                <h3>Calculation Engine (Test Console)</h3>
-                <p>Enter capacitance values separated by commas (e.g., 5, 10, 15)</p>
-                <input type="text" id="c-values" placeholder="5, 10, 15" style="width: 100%; padding: 8px; margin-bottom: 10px;">
-                <button onclick="testCalculateCapacitor('series')">Calculate Series</button>
-                <button onclick="testCalculateCapacitor('parallel')">Calculate Parallel</button>
-                <h4 id="calc-cap-result">Result: 0 F</h4>
-            </div>
+        <div id="inputResistors" style="display:none;">
+            <h2>Resistor System</h2>
+            <input type="text" id="resistorValues" placeholder="Enter resistances (r1,r2,r3)">
+            <button onclick="calculateResistance()">Calculate Equivalent Resistance</button>
         </div>
-    </div>
-
+        <div id="inputCapacitors" style="display:none;">
+            <h2>Capacitor System</h2>
+            <input type="text" id="capacitorValues" placeholder="Enter capacities (c1,c2,c3)">
+            <button onclick="calculateCapacitance()">Calculate Equivalent Capacitance</button>
+        </div>
+    </main>
     <script>
-        // State variables
-        let currentComponent = 'resistor';
-        let currentDimension = '2D';
-
-        // Change between Resistors and Capacitors
-        function setComponentType(type) {
-            currentComponent = type;
-            
-            // Update UI buttons
-            document.getElementById('btn-resistor').classList.toggle('active', type === 'resistor');
-            document.getElementById('btn-capacitor').classList.toggle('active', type === 'capacitor');
-            
-            // Toggle view sections
-            document.getElementById('resistor-controls').style.display = type === 'resistor' ? 'block' : 'none';
-            document.getElementById('capacitor-controls').style.display = type === 'capacitor' ? 'block' : 'none';
-
-            // Change background theme
-            if (type === 'resistor') {
-                document.body.className = 'resistor-theme';
-            } else {
-                document.body.className = 'capacitor-theme';
-            }
+        function changeTheme() {
+            const systemType = document.getElementById('systemType').value;
+            document.body.className = systemType === 'resistors' ? 'resistor-theme' : 'capacitor-theme';
+            document.getElementById('inputResistors').style.display = systemType === 'resistors' ? 'block' : 'none';
+            document.getElementById('inputCapacitors').style.display = systemType === 'capacitors' ? 'block' : 'none';
         }
 
-        // Change between 2D and 3D
-        function setDimension(dim) {
-            currentDimension = dim;
-            document.getElementById('btn-2d').classList.toggle('active', dim === '2D');
-            document.getElementById('btn-3d').classList.toggle('active', dim === '3D');
-            
-            // Update placeholder text
-            document.getElementById('canvas-area').innerText = `[${dim} Drawing Engine Placeholder] - Ready for canvas integration.`;
+        function calculateResistance() {
+            const values = document.getElementById('resistorValues').value.split(',').map(Number);
+            const seriesResistance = values.reduce((a, b) => a + b, 0);
+            const parallelResistance = 1 / values.reduce((a, b) => a + (1 / b), 0);
+            alert(`Series Resistance: ${seriesResistance} Ω\nParallel Resistance: ${parallelResistance} Ω`);
         }
 
-        // Foundational Math Logic for Resistors
-        function calculateEquivalentResistance(type, resistances) {
-            if (resistances.length === 0) return 0;
-
-            if (type === 'series') {
-                // R = R1 + R2 + ...
-                return resistances.reduce((acc, val) => acc + val, 0);
-            } else if (type === 'parallel') {
-                // 1/R = 1/R1 + 1/R2 + ...
-                const sumOfInverses = resistances.reduce((acc, val) => acc + (1 / val), 0);
-                return 1 / sumOfInverses;
-            }
+        function calculateCapacitance() {
+            const values = document.getElementById('capacitorValues').value.split(',').map(Number);
+            const seriesCapacitance = 1 / values.reduce((a, b) => a + (1 / b), 0);
+            const parallelCapacitance = values.reduce((a, b) => a + b, 0);
+            alert(`Series Capacitance: ${seriesCapacitance} F\nParallel Capacitance: ${parallelCapacitance} F`);
         }
-
-        // Test function hooked up to the UI
-        function testCalculate(type) {
-            const input = document.getElementById('r-values').value;
-            // Parse comma separated values into an array of numbers
-            const valuesArr = input.split(',').map(val => parseFloat(val.trim())).filter(val => !isNaN(val) && val > 0);
-            
-            if (valuesArr.length === 0) {
-                document.getElementById('calc-result').innerText = "Please enter valid numbers.";
-                return;
-            }
-
-            const req = calculateEquivalentResistance(type, valuesArr);
-            document.getElementById('calc-result').innerText = `Result (${type}): ${req.toFixed(2)} Ω`;
-        }
-      // --- CAPACITOR LOGIC ---
-
-        // Change between 2D and 3D for Capacitors
-        function setCapacitorDimension(dim) {
-            document.getElementById('btn-cap-2d').classList.toggle('active', dim === '2D');
-            document.getElementById('btn-cap-3d').classList.toggle('active', dim === '3D');
-            
-            // Update placeholder text
-            document.getElementById('cap-canvas-area').innerText = `[${dim} Drawing Engine Placeholder] - Ready for canvas integration.`;
-        }
-
-        // Foundational Math Logic for Capacitors (Inverse of Resistors)
-        function calculateEquivalentCapacity(type, capacities) {
-            if (capacities.length === 0) return 0;
-
-            if (type === 'parallel') {
-                // C = C1 + C2 + ...
-                return capacities.reduce((acc, val) => acc + val, 0);
-            } else if (type === 'series') {
-                // 1/C = 1/C1 + 1/C2 + ...
-                const sumOfInverses = capacities.reduce((acc, val) => acc + (1 / val), 0);
-                return 1 / sumOfInverses;
-            }
-        }
-
-        // Test function hooked up to the Capacitor UI
-        function testCalculateCapacitor(type) {
-            const input = document.getElementById('c-values').value;
-            // Parse comma separated values into an array of numbers
-            const valuesArr = input.split(',').map(val => parseFloat(val.trim())).filter(val => !isNaN(val) && val > 0);
-            
-            if (valuesArr.length === 0) {
-                document.getElementById('calc-cap-result').innerText = "Please enter valid numbers.";
-                return;
-            }
-
-            const ceq = calculateEquivalentCapacity(type, valuesArr);
-            // Displaying Farads (F) as the unit
-            document.getElementById('calc-cap-result').innerText = `Result (${type}): ${ceq.toFixed(2)} F`;
-        }
-        // Initialize Fabric Canvas
-const canvas = new fabric.Canvas('circuit-canvas');
-
-// Function to create the International Symbol for Resistor (Zig-Zag)
-function createResistorSymbol(x, y) {
-    const points = [
-        {x: 0, y: 10}, {x: 10, y: 10},  // Lead-in
-        {x: 15, y: 0}, {x: 25, y: 20},  // Zig
-        {x: 35, y: 0}, {x: 45, y: 20},  // Zag
-        {x: 55, y: 10}, {x: 65, y: 10}  // Lead-out
-    ];
-    return new fabric.Polyline(points, {
-        fill: 'transparent',
-        stroke: 'black',
-        strokeWidth: 2,
-        left: x,
-        top: y
-    });
-}
-
-// Function to create the International Symbol for Capacitor (Parallel Plates)
-function createCapacitorSymbol(x, y) {
-    const line1 = new fabric.Line([0, 0, 0, 20], { stroke: 'black', strokeWidth: 3 });
-    const line2 = new fabric.Line([10, 0, 10, 20], { stroke: 'black', strokeWidth: 3 });
-    const lead1 = new fabric.Line([-15, 10, 0, 10], { stroke: 'black', strokeWidth: 2 });
-    const lead2 = new fabric.Line([10, 10, 25, 10], { stroke: 'black', strokeWidth: 2 });
-    
-    return new fabric.Group([line1, line2, lead1, lead2], {
-        left: x,
-        top: y
-    });
-}
-
-// Add the selected component to the canvas
-function addComponent() {
-    let component;
-    if (currentComponent === 'resistor') {
-        component = createResistorSymbol(100, 100);
-    } else {
-        component = createCapacitorSymbol(100, 100);
-    }
-    canvas.add(component);
-}
-
-// Simple wire (line) drawing
-function addWire() {
-    const line = new fabric.Line([50, 50, 150, 50], {
-        fill: 'black',
-        stroke: 'black',
-        strokeWidth: 2,
-        selectable: true
-    });
-    canvas.add(line);
-}
-
-// Delete selected object
-function deleteSelected() {
-    const activeObjects = canvas.getActiveObjects();
-    canvas.discardActiveObject();
-    canvas.remove(...activeObjects);
-}
-
-// Clear the board
-function clearCanvas() {
-    if(confirm("Clear the entire system?")) {
-        canvas.clear();
-    }
-}
-        // Initialize Fabric Canvas
-const canvas = new fabric.Canvas('circuit-canvas');
-
-// Function to create the International Symbol for Resistor (Zig-Zag)
-function createResistorSymbol(x, y) {
-    const points = [
-        {x: 0, y: 10}, {x: 10, y: 10},  // Lead-in
-        {x: 15, y: 0}, {x: 25, y: 20},  // Zig
-        {x: 35, y: 0}, {x: 45, y: 20},  // Zag
-        {x: 55, y: 10}, {x: 65, y: 10}  // Lead-out
-    ];
-    return new fabric.Polyline(points, {
-        fill: 'transparent',
-        stroke: 'black',
-        strokeWidth: 2,
-        left: x,
-        top: y
-    });
-}
-
-// Function to create the International Symbol for Capacitor (Parallel Plates)
-function createCapacitorSymbol(x, y) {
-    const line1 = new fabric.Line([0, 0, 0, 20], { stroke: 'black', strokeWidth: 3 });
-    const line2 = new fabric.Line([10, 0, 10, 20], { stroke: 'black', strokeWidth: 3 });
-    const lead1 = new fabric.Line([-15, 10, 0, 10], { stroke: 'black', strokeWidth: 2 });
-    const lead2 = new fabric.Line([10, 10, 25, 10], { stroke: 'black', strokeWidth: 2 });
-    
-    return new fabric.Group([line1, line2, lead1, lead2], {
-        left: x,
-        top: y
-    });
-}
-
-// Add the selected component to the canvas
-function addComponent() {
-    let component;
-    if (currentComponent === 'resistor') {
-        component = createResistorSymbol(100, 100);
-    } else {
-        component = createCapacitorSymbol(100, 100);
-    }
-    canvas.add(component);
-}
-
-// Simple wire (line) drawing
-function addWire() {
-    const line = new fabric.Line([50, 50, 150, 50], {
-        fill: 'black',
-        stroke: 'black',
-        strokeWidth: 2,
-        selectable: true
-    });
-    canvas.add(line);
-}
-
-// Delete selected object
-function deleteSelected() {
-    const activeObjects = canvas.getActiveObjects();
-    canvas.discardActiveObject();
-    canvas.remove(...activeObjects);
-}
-
-// Clear the board
-function clearCanvas() {
-    if(confirm("Clear the entire system?")) {
-        canvas.clear();
-    }
-}
     </script>
 </body>
 </html>

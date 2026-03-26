@@ -1,261 +1,558 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Physics Circuit Solver</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>⚡ EDGE RUNNER — minimal dino-style game</title>
+  <style>
+    * {
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-<style>
-body{
-font-family:Arial;
-text-align:center;
-background:linear-gradient(135deg,#ff9a00,#ff3d00);
-color:white;
-}
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(145deg, #f7f9fc 0%, #eef2f5 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', 'Courier New', 'Monaco', monospace;
+    }
 
-h1{
-margin-top:20px;
-}
+    /* game container — super clean, sharp edges */
+    .game-container {
+      background: #ffffff;
+      border-radius: 32px;
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.8);
+      padding: 20px 25px 25px 25px;
+    }
 
-#toolbar{
-margin:20px;
-}
+    canvas {
+      display: block;
+      margin: 0 auto;
+      border-radius: 20px;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+      background-color: #fefcf5;
+    }
 
-button{
-padding:10px 15px;
-margin:5px;
-border:none;
-border-radius:8px;
-cursor:pointer;
-font-weight:bold;
-}
+    .info-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 16px;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 1.3rem;
+      letter-spacing: 1px;
+      color: #2c3e2f;
+    }
 
-<select id="systemSelector" onchange="changeSystem()">
-<option value="resistor">Resistor System</option>
-<option value="capacitor">Capacitor System</option>
-</select>
+    .score-board {
+      background: #e9ece5;
+      padding: 6px 18px;
+      border-radius: 60px;
+      font-family: monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1e3c1c;
+      box-shadow: inset 0 1px 2px #0001, 0 1px 0 white;
+    }
 
-<select id="dimensionSelector">
-<option value="2d">2D System</option>
-<option value="3d">3D System</option>
-</select>
-  canvas{
-background:white;
-border:3px solid black;
-}
+    .restart-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      font-weight: 600;
+      font-family: monospace;
+      background: #2d3e2a;
+      color: white;
+      padding: 6px 20px;
+      border-radius: 60px;
+      cursor: pointer;
+      transition: 0.1s linear;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
 
-input{
-padding:8px;
-margin:5px;
-}
+    .restart-btn:active {
+      transform: scale(0.96);
+      background: #1e2e1c;
+    }
 
-#result{
-font-size:20px;
-margin-top:20px;
-}
-</style>
+    .hint {
+      text-align: center;
+      font-size: 0.75rem;
+      margin-top: 14px;
+      color: #5b6e53;
+      background: #eef3e9;
+      display: inline-block;
+      width: auto;
+      padding: 6px 18px;
+      border-radius: 50px;
+      backdrop-filter: blur(2px);
+      font-weight: 500;
+    }
+
+    .status {
+      font-size: 0.9rem;
+      background: #f4f1e0;
+      padding: 5px 14px;
+      border-radius: 28px;
+      font-weight: 500;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 0.7rem;
+      color: #7f8c6d;
+    }
+
+    @media (max-width: 550px) {
+      .game-container { padding: 12px 15px 20px; }
+      .score-board { font-size: 1.2rem; padding: 4px 14px; }
+      .restart-btn { font-size: 1rem; padding: 4px 16px; }
+    }
+  </style>
 </head>
-
 <body>
-
-<h1>⚡ Physics Circuit Solver</h1>
-
-<div id="toolbar">
-
-<select id="systemType">
-<option value="resistor">Resistors</option>
-<option value="capacitor">Capacitors</option>
-</select>
-
-<select id="connectionType">
-<option value="series">Series</option>
-<option value="parallel">Parallel</option>
-</select>
-
-<button onclick="addComponent()">Add Component</button>
-<button onclick="calculate()">Calculate Equivalent</button>
-
+<div>
+  <div class="game-container">
+    <canvas id="gameCanvas" width="900" height="280"></canvas>
+    <div class="info-panel">
+      <div class="status" id="gameStatusText">🏃‍♂️ RUNNING</div>
+      <div class="score-board">SCORE: <span id="scoreValue">0</span></div>
+      <button class="restart-btn" id="restartButton">⟳ RESTART</button>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <div class="hint">⚡ SPACE / ▲ / CLICK → jump</div>
+      <div class="hint">🎯 avoid cubes → survive</div>
+    </div>
+    <footer>reliable • zero glitch • minimal runner</footer>
+  </div>
 </div>
 
-<canvas id="circuitCanvas" width="800" height="400"></canvas>
-
-<div id="values"></div>
-
-<div id="result"></div>
-
 <script>
-  let systemType="resistor"
-
-function changeSystem(){
-
-systemType=document.getElementById("systemSelector").value
-
-if(systemType==="resistor"){
-document.body.style.background="linear-gradient(135deg,#ff9a00,#ff3d00)"
-}
-
-if(systemType==="capacitor"){
-document.body.style.background="linear-gradient(135deg,#00bfff,#0040ff)"
-}
-
-drawCircuit()
-
-}
-
-let components=[]
-let canvas=document.getElementById("circuitCanvas")
-let ctx=canvas.getContext("2d")
-
-function drawComponent(x,y){
-
-if(systemType==="resistor"){
-drawResistor(x,y)
-}
-else{
-drawCapacitor(x,y)
-}
-
-}
-
-function drawCapacitor(x,y){
-
-ctx.beginPath()
-
-ctx.moveTo(x,y-20)
-ctx.lineTo(x,y+20)
-
-ctx.moveTo(x+20,y-20)
-ctx.lineTo(x+20,y+20)
-
-ctx.stroke()
-
-}
-}
-
-function drawCircuit(){
-
-ctx.clearRect(0,0,canvas.width,canvas.height)
-
-let x=50
-let y=200
-
-for(let i=0;i<components.length;i++){
-
-drawResistor(x,y)
-
-ctx.fillStyle="black"
-ctx.fillText(components[i]+"Ω",x+10,y-20)
-
-x+=120
-
-}
-
-}
-
-function drawComponent(x,y){
-
-ctx.beginPath()
-
-ctx.moveTo(x,y)
-
-ctx.lineTo(x+10,y)
-
-ctx.lineTo(x+20,y-10)
-
-ctx.lineTo(x+30,y+10)
-
-ctx.lineTo(x+40,y-10)
-
-ctx.lineTo(x+50,y+10)
-
-ctx.lineTo(x+60,y)
-
-ctx.lineTo(x+70,y)
-
-ctx.stroke()
-
-}
-
-function displayInputs(){
-
-let html=""
-
-for(let i=0;i<components.length;i++){
-
-html+=`
-<input type="number" value="${components[i]}" 
-onchange="components[${i}]=Number(this.value)">
-`
-
-}
-
-document.getElementById("values").innerHTML=html
-
-}
-
-function calculate(){
-
-let type=document.getElementById("connectionType").value
-
-if(components.length===0){
-alert("Add components first")
-return
-}
-
-if(systemType==="resistor"){
-
-if(type==="series"){
-
-let R=0
-components.forEach(v=>R+=v)
-
-document.getElementById("result").innerText=
-"Equivalent Resistance = "+R+" Ω"
-
-}
-
-else{
-
-let sum=0
-components.forEach(v=>sum+=1/v)
-
-let R=1/sum
-
-document.getElementById("result").innerText=
-"Equivalent Resistance = "+R.toFixed(3)+" Ω"
-
-}
-
-}
-
-else if(systemType==="capacitor"){
-
-if(type==="parallel"){
-
-let C=0
-components.forEach(v=>C+=v)
-
-document.getElementById("result").innerText=
-"Equivalent Capacitance = "+C+" F"
-
-}
-
-else{
-
-let sum=0
-components.forEach(v=>sum+=1/v)
-
-let C=1/sum
-
-document.getElementById("result").innerText=
-"Equivalent Capacitance = "+C.toFixed(6)+" F"
-
-}
-
-}
-
-}
-
+  (function(){
+    // ---------- CANVAS ----------
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // ---------- FIXED DIMENSIONS (robust, no rounding glitches) ----------
+    const W = 900;
+    const H = 280;
+    canvas.width = W;
+    canvas.height = H;
+
+    // ---------- GAME CONSTANTS (physics tuned for stability) ----------
+    const GROUND_Y = H - 38;        // where runner stands
+    const PLAYER_WIDTH = 22;
+    const PLAYER_HEIGHT = 26;
+    const PLAYER_X = 90;             // fixed horizontal position
+    
+    // physics
+    const GRAVITY = 0.85;
+    const JUMP_POWER = -11.2;
+    const MIN_OBSTACLE_SPACING = 120;   // min distance between obstacles (frames)
+    
+    // world movement
+    let baseSpeed = 5.0;
+    let currentSpeed = baseSpeed;
+    let score = 0;
+    let frameCounter = 0;
+    let gameOver = false;
+    let animationId = null;
+    
+    // ---- player state ----
+    let playerY = GROUND_Y - PLAYER_HEIGHT;
+    let playerVy = 0;
+    let isOnGround = true;
+    
+    // ---- obstacles array (each: x, width, height) ----
+    let obstacles = [];
+    
+    // ---- cooldown for generating next obstacle (frame-based) ----
+    let nextObstacleCooldown = 0;
+    
+    // ---- anti-glitch jump lock (prevents multiple jump triggers per frame) ----
+    let jumpRequested = false;
+    
+    // ---- UI elements ----
+    const scoreSpan = document.getElementById('scoreValue');
+    const statusSpan = document.getElementById('gameStatusText');
+    const restartBtn = document.getElementById('restartButton');
+    
+    // ---------- HELPER: reset game fully (no memory leaks, clean arrays) ----------
+    function fullReset() {
+      gameOver = false;
+      score = 0;
+      frameCounter = 0;
+      currentSpeed = baseSpeed;
+      updateScoreUI();
+      
+      // reset player
+      playerY = GROUND_Y - PLAYER_HEIGHT;
+      playerVy = 0;
+      isOnGround = true;
+      jumpRequested = false;
+      
+      // clear obstacles
+      obstacles = [];
+      
+      // reset cooldown: we want immediate fair spawn after ~45 frames
+      nextObstacleCooldown = 25;   // small delay before first obstacle appears
+      
+      // status UI
+      statusSpan.innerHTML = "🏃‍♂️ RUNNING";
+      statusSpan.style.color = "#2c3e2f";
+      
+      // small visual refresh
+      drawGame(); 
+    }
+    
+    // update displayed score
+    function updateScoreUI() {
+      scoreSpan.innerText = Math.floor(score);
+    }
+    
+    // ---------- collision detection (pixel-perfect AABB, NO approximation glitches) ----------
+    function checkCollision(rect1, rect2) {
+      return (rect1.x < rect2.x + rect2.w &&
+              rect1.x + rect1.w > rect2.x &&
+              rect1.y < rect2.y + rect2.h &&
+              rect1.y + rect1.h > rect2.y);
+    }
+    
+    // get player collision rectangle (always precise)
+    function getPlayerRect() {
+      return {
+        x: PLAYER_X,
+        y: playerY,
+        w: PLAYER_WIDTH,
+        h: PLAYER_HEIGHT
+      };
+    }
+    
+    // get obstacle rectangle
+    function getObstacleRect(obs) {
+      return {
+        x: obs.x,
+        y: GROUND_Y - obs.height,
+        w: obs.width,
+        h: obs.height
+      };
+    }
+    
+    // ---------- update logic (deterministic, frame independent feel but stable) ----------
+    function updateGame() {
+      if (gameOver) return;
+      
+      // 1) apply gravity & vertical movement (stable euler integration)
+      playerVy += GRAVITY;
+      playerY += playerVy;
+      
+      // ground collision (precise, prevents falling through)
+      const floorLimit = GROUND_Y - PLAYER_HEIGHT;
+      if (playerY >= floorLimit) {
+        playerY = floorLimit;
+        playerVy = 0;
+        isOnGround = true;
+      } else {
+        isOnGround = false;
+      }
+      
+      // roof guard (just in case, never glitch above canvas)
+      if (playerY < 0) {
+        playerY = 0;
+        if (playerVy < 0) playerVy = 0;
+      }
+      
+      // handle jump request (triggered by user action)
+      if (jumpRequested && !gameOver && isOnGround) {
+        playerVy = JUMP_POWER;
+        isOnGround = false;
+        jumpRequested = false;
+      } else {
+        jumpRequested = false;   // consume if not applicable
+      }
+      
+      // 2) move obstacles & increase difficulty (score-based speed)
+      // speed gradually rises, max 12.8 (still comfortable & reliable)
+      let targetSpeed = baseSpeed + Math.floor(score / 550) * 0.65;
+      if (targetSpeed > 12.8) targetSpeed = 12.8;
+      currentSpeed = targetSpeed;
+      
+      // move obstacles left and remove offscreen ones
+      for (let i = 0; i < obstacles.length; i++) {
+        obstacles[i].x -= currentSpeed;
+      }
+      obstacles = obstacles.filter(obs => obs.x + obs.width > 0);
+      
+      // 3) spawn new obstacles — dynamic but with strict cooldown to avoid overlapping / stacking
+      if (nextObstacleCooldown <= 0 && !gameOver) {
+        // determine random obstacle type (width + height variations, but always fair)
+        const type = Math.floor(Math.random() * 3); // 0,1,2
+        let width = 12;
+        let height = 16;
+        if (type === 0) { width = 12; height = 18; }    // small block
+        else if (type === 1) { width = 14; height = 22; } // medium
+        else { width = 16; height = 26; }                 // tall cube
+        
+        // avoid edge-case: if obstacle would spawn overlapping existing? we ensure min distance
+        let canSpawn = true;
+        if (obstacles.length > 0) {
+          const lastObs = obstacles[obstacles.length - 1];
+          const lastRightEdge = lastObs.x + lastObs.width;
+          // new obstacle would appear at W - margin
+          const newX = W;
+          if (newX - lastRightEdge < MIN_OBSTACLE_SPACING) {
+            canSpawn = false;
+          }
+        }
+        // additionally avoid extreme clustering when many obstacles present
+        if (canSpawn && obstacles.length < 5) {
+          obstacles.push({
+            x: W,
+            width: width,
+            height: height
+          });
+          // set cooldown based on current speed (faster game = slightly lower cooldown but still safe)
+          let cooldownBase = 58 - Math.floor(currentSpeed * 1.4);
+          if (cooldownBase < 34) cooldownBase = 34;
+          nextObstacleCooldown = cooldownBase;
+        } else {
+          // if can't spawn, just set tiny cooldown to re-evaluate soon
+          nextObstacleCooldown = 8;
+        }
+      } else {
+        if (nextObstacleCooldown > 0) nextObstacleCooldown--;
+      }
+      
+      // 4) collision detection (heavily reliable: if ANY contact => game over)
+      const playerRect = getPlayerRect();
+      for (let i = 0; i < obstacles.length; i++) {
+        const obsRect = getObstacleRect(obstacles[i]);
+        if (checkCollision(playerRect, obsRect)) {
+          gameOver = true;
+          statusSpan.innerHTML = "💀 GAME OVER";
+          statusSpan.style.color = "#a13e3e";
+          drawGame();   // immediate draw frozen state
+          return;       // stop updating further
+        }
+      }
+      
+      // 5) increase score (survival points, based on frame progression + speed)
+      // ensures smooth, non-glitch accumulation even at high framerates
+      let increment = 0.25 + (currentSpeed / 28);
+      score += increment;
+      updateScoreUI();
+      
+      // extra small frame counter for difficulty feel
+      frameCounter++;
+      
+      // draw after every update (smooth animation)
+      drawGame();
+    }
+    
+    // ---------- DRAW EVERYTHING: minimal yet refined, crisp graphics ----------
+    function drawGame() {
+      ctx.clearRect(0, 0, W, H);
+      
+      // ---- soft gradient sky ----
+      const gradSky = ctx.createLinearGradient(0, 0, 0, H*0.6);
+      gradSky.addColorStop(0, "#eef5e8");
+      gradSky.addColorStop(1, "#fef9e3");
+      ctx.fillStyle = gradSky;
+      ctx.fillRect(0, 0, W, H);
+      
+      // ---- ground with subtle texture (stable & retro) ----
+      ctx.fillStyle = "#c7b58a";
+      ctx.fillRect(0, GROUND_Y - 6, W, 8);
+      ctx.fillStyle = "#b59d6e";
+      ctx.fillRect(0, GROUND_Y - 2, W, 6);
+      ctx.fillStyle = "#8b6f42";
+      ctx.fillRect(0, GROUND_Y, W, 5);
+      // ground shadow line
+      ctx.fillStyle = "#e9dbc7";
+      ctx.fillRect(0, GROUND_Y-1, W, 2);
+      
+      // little pebbles / dust (visual charm, no logic)
+      ctx.fillStyle = "#aa8e62";
+      for (let i = 0; i < 8; i++) {
+        let x = (frameCounter * 0.7 + i * 73) % W;
+        ctx.beginPath();
+        ctx.arc(x, GROUND_Y - 2, 2, 0, Math.PI*2);
+        ctx.fill();
+      }
+      
+      // ---- draw obstacles (minimal cubes / pillars, good readability) ----
+      for (let obs of obstacles) {
+        const obsX = obs.x;
+        const obsY = GROUND_Y - obs.height;
+        // rounded rectangle style for smooth look
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#4b3b2c";
+        ctx.fillRect(obsX, obsY, obs.width, obs.height);
+        ctx.fillStyle = "#6e4f2c";
+        ctx.fillRect(obsX+2, obsY, obs.width-4, 4);
+        ctx.fillStyle = "#2f241b";
+        ctx.fillRect(obsX+3, obsY+5, obs.width-6, obs.height-10);
+        // highlight
+        ctx.fillStyle = "#b87c4f";
+        ctx.fillRect(obsX+2, obsY+obs.height-5, obs.width-4, 3);
+      }
+      
+      // ---- PLAYER (runner) : clean, dynamic leg movement based on jump/run ----
+      const playerFeetY = playerY + PLAYER_HEIGHT;
+      const legSwing = Math.sin(frameCounter * 0.22) * 3;
+      ctx.fillStyle = "#2c3e2f";
+      ctx.shadowColor = "rgba(0,0,0,0.1)";
+      ctx.shadowBlur = 2;
+      // body
+      ctx.fillRect(PLAYER_X, playerY, PLAYER_WIDTH, PLAYER_HEIGHT);
+      // head / eye
+      ctx.fillStyle = "#f5eace";
+      ctx.fillRect(PLAYER_X+4, playerY+4, 6, 6);
+      ctx.fillStyle = "#000";
+      ctx.fillRect(PLAYER_X+6, playerY+6, 2, 2);
+      // dynamic leg motion
+      ctx.fillStyle = "#1d2f1b";
+      if (!isOnGround) {
+        // jump pose: legs tucked
+        ctx.fillRect(PLAYER_X+3, playerY+PLAYER_HEIGHT-6, 5, 8);
+        ctx.fillRect(PLAYER_X+14, playerY+PLAYER_HEIGHT-6, 5, 8);
+      } else {
+        ctx.fillRect(PLAYER_X+2, playerY+PLAYER_HEIGHT-4, 5, 10);
+        ctx.fillRect(PLAYER_X+15, playerY+PLAYER_HEIGHT-4, 5, 10);
+        // little running motion stripes
+        if (Math.floor(frameCounter / 6) % 2 === 0) {
+          ctx.fillStyle = "#b58f5a";
+          ctx.fillRect(PLAYER_X+20, playerY+18, 4, 3);
+        }
+      }
+      // arm movement
+      ctx.fillStyle = "#243d21";
+      ctx.fillRect(PLAYER_X-3, playerY+12, 5, 4);
+      ctx.fillRect(PLAYER_X+PLAYER_WIDTH-2, playerY+14, 5, 4);
+      ctx.shadowBlur = 0;
+      
+      // extra speed particles when running fast (cosmetic)
+      if (!gameOver && currentSpeed > 7.5) {
+        ctx.fillStyle = "#ffcf8a";
+        for (let i=0; i<2; i++) {
+          ctx.beginPath();
+          ctx.arc(PLAYER_X-5 - (frameCounter%7), playerY+18, 2, 0, Math.PI*2);
+          ctx.fill();
+        }
+      }
+      
+      // ---- game over overlay if needed (subtle but clear) ----
+      if (gameOver) {
+        ctx.globalAlpha = 0.82;
+        ctx.fillStyle = "#1e2a1c";
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = 1;
+        ctx.font = "bold 28px 'Segoe UI', 'Courier New', monospace";
+        ctx.fillStyle = "#fae67a";
+        ctx.shadowBlur = 0;
+        ctx.fillText("✖ GAME OVER", W/2-110, H/2-20);
+        ctx.font = "16px monospace";
+        ctx.fillStyle = "#ddd6b0";
+        ctx.fillText("click RESTART or press [R]", W/2-110, H/2+30);
+      }
+      
+      // minimal score flair on canvas
+      ctx.font = "bold 15px monospace";
+      ctx.fillStyle = "#594e36";
+      ctx.fillText("⚡", W-40, 45);
+    }
+    
+    // ---------- GAME LOOP (reliable requestAnimationFrame, never skip update) ----------
+    let lastTimestamp = 0;
+    function gameLoop() {
+      // update simulation only if game not over, otherwise we only redraw but no logic movement
+      if (!gameOver) {
+        updateGame();
+      } else {
+        // if game over, we still redraw so that game over screen is responsive
+        drawGame();
+      }
+      animationId = requestAnimationFrame(gameLoop);
+    }
+    
+    // ---------- JUMP HANDLER (prevents multiple triggers, also works with clicks) ----------
+    function performJump() {
+      if (gameOver) return;
+      // only set jump request if grounded, updateGame will apply it safely
+      if (isOnGround) {
+        jumpRequested = true;
+      } else {
+        // if in air, can't jump - but we ignore (no double jump)
+        return;
+      }
+    }
+    
+    // ---------- EVENT LISTENERS (robust, keyboard + mouse + touch) ----------
+    function handleKeydown(e) {
+      const key = e.key;
+      if (key === ' ' || key === 'ArrowUp' || key === 'Space' || key === 'ArrowUp') {
+        e.preventDefault();
+        performJump();
+      }
+      // press 'r' or 'R' to restart even during game over
+      if (key === 'r' || key === 'R') {
+        e.preventDefault();
+        fullReset();
+      }
+    }
+    
+    function handleCanvasClick(e) {
+      e.preventDefault();
+      performJump();
+    }
+    
+    // touchstart for mobile (reliable)
+    function handleTouchStart(e) {
+      e.preventDefault();
+      performJump();
+    }
+    
+    // restart button action
+    restartBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      fullReset();
+    });
+    
+    // also allow any clicks on canvas to jump
+    canvas.addEventListener('click', handleCanvasClick);
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('keydown', handleKeydown);
+    
+    // prevent page scroll on arrow keys and space globally
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowUp' || e.key === ' ' || e.key === 'Space') {
+        if (document.activeElement === canvas || document.activeElement === document.body) {
+          e.preventDefault();
+        }
+      }
+    });
+    
+    // ---------- INITIALIZE ----------
+    fullReset();
+    
+    // start the game loop
+    animationId = requestAnimationFrame(gameLoop);
+    
+    // optional: ensure canvas focus doesn't interfere but works anyway
+    canvas.setAttribute('tabindex', '0');
+    canvas.style.outline = 'none';
+    
+    // safety cleanup (no memory leaks, but keep it running forever)
+    window.addEventListener('beforeunload', ()=>{
+      if(animationId) cancelAnimationFrame(animationId);
+    });
+  })();
 </script>
-
 </body>
 </html>
